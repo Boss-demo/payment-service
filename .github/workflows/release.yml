@@ -14,6 +14,7 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -23,10 +24,22 @@ jobs:
 
       - run: npm install
 
+      # 🔹 Install jq to read JSON
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y jq
+
+      # 🔹 Read tier from tier.config.json
+      - name: Read tier config
+        run: |
+          TIER=$(jq -r .tier tier.config.json)
+          echo "SERVICE_TIER=$TIER" >> $GITHUB_ENV
+
       - name: Fix permissions
         run: chmod +x ./node_modules/.bin/semantic-release
 
+      # 🔹 Run semantic release with tier injected
       - name: Run semantic release
         run: ./node_modules/.bin/semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SERVICE_TIER: ${{ env.SERVICE_TIER }}
